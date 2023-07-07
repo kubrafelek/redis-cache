@@ -5,8 +5,8 @@ import {
   type NextAuthOptions,
   type DefaultSession,
 } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
-import { env } from "~/env.mjs";
+import GoogleProvider from "next-auth/providers/google";
+import { redis } from "~/lib/redis";
 import { prisma } from "~/server/db";
 
 /**
@@ -47,10 +47,34 @@ export const authOptions: NextAuthOptions = {
   },
   adapter: PrismaAdapter(prisma),
   providers: [
-    DiscordProvider({
-      clientId: env.DISCORD_CLIENT_ID,
-      clientSecret: env.DISCORD_CLIENT_SECRET,
+    GoogleProvider({
+      clientId: "85472800678-lkd0frtouqobau52l1rhv226uctfhrst.apps.googleusercontent.com",
+      clientSecret: "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",
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+        };
+      },
+      style: {
+        logo: "/google.svg",
+        logoDark: "/google.svg",
+        bgDark: "#fff",
+        bg: "black",
+        text: "#000",
+        textDark: "white",
+      },
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
     }),
+
     /**
      * ...add more providers here.
      *
@@ -72,5 +96,6 @@ export const getServerAuthSession = (ctx: {
   req: GetServerSidePropsContext["req"];
   res: GetServerSidePropsContext["res"];
 }) => {
+
   return getServerSession(ctx.req, ctx.res, authOptions);
 };
